@@ -1,7 +1,11 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
-import App from './App';
+import { enableMapSet } from 'immer';
 import './index.css';
+import App from './App';
+
+// Enable MapSet support for Immer before any stores are used
+enableMapSet();
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>

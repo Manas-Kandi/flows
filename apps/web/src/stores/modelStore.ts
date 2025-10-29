@@ -180,6 +180,12 @@ export const useModelStore = create<ModelState>()(
       }
     },
 
+    clearAllConstraints: () => {
+      set((state) => {
+        state.sketchState.constraints.clear();
+      });
+    },
+
     addFeature: (feature) => {
       set((state) => {
         if (state.currentPart) {
