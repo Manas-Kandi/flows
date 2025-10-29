@@ -39,7 +39,7 @@ export function CommandBar() {
   };
 
   return (
-    <div className="h-12 border-b border-border bg-card flex items-center justify-between px-4 gap-4">
+    <div className="h-12 border-b border-border bg-card flex items-center px-4 gap-4">
       {/* Left: Logo & Project Navigation */}
       <div className="flex items-center gap-3">
         <div className="text-lg font-bold text-primary">Flows</div>
@@ -79,8 +79,12 @@ export function CommandBar() {
         <div className="text-xs text-muted-foreground">• {getCurrentModeLabel()}</div>
       </div>
 
-      {/* Center: Core Actions */}
-      <div className="flex items-center gap-1">
+      {/* Spacer to push right content */}
+      <div className="flex-1" />
+
+      {/* Right: Core Actions, Collaborators & More Menu */}
+      <div className="flex items-center gap-2">
+        {/* Core Actions */}
         <Button variant="ghost" size="icon" title="Undo (Ctrl+Z)">
           <Undo2 size={18} />
         </Button>
@@ -96,10 +100,8 @@ export function CommandBar() {
         <Button variant="ghost" size="icon" title="Share">
           <Share2 size={18} />
         </Button>
-      </div>
-
-      {/* Right: Collaborators & More Menu */}
-      <div className="flex items-center gap-2">
+        
+        <div className="w-px h-6 bg-border mx-2" />
         {/* Collaborators (if any) */}
         {collaborators.length > 0 && (
           <>
