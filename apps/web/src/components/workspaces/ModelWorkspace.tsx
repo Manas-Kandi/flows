@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import { UnifiedViewport } from '../viewport/UnifiedViewport';
-import { FeatureTree } from '../model/FeatureTree';
 import { PlaneSelector } from '../viewport/PlaneSelector';
 import { ExtrudeDialog } from '../model/ExtrudeDialog';
 import { ModelToolbar } from './ModelToolbar';
@@ -63,16 +62,9 @@ export function ModelWorkspace() {
       />
       
       {/* Main Content */}
-      <div className="flex-1 flex overflow-hidden">
+      <div className="flex-1 overflow-hidden">
         {/* Unified Viewport */}
-        <div className="flex-1 relative">
-          <UnifiedViewport />
-        </div>
-        
-        {/* Feature Tree Sidebar */}
-        <div className="w-64 border-l border-gray-200">
-          <FeatureTree />
-        </div>
+        <UnifiedViewport />
       </div>
       
       {/* Dialogs */}
