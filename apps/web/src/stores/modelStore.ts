@@ -15,6 +15,10 @@ interface SketchState {
 interface ModelState {
   currentPart?: Part;
   activeSketch?: Sketch;
+  sketches: Map<string, Sketch>;
+  entities: Map<string, SketchEntity>;
+  constraints: Map<string, AppConstraint>;
+  features: Map<string, Feature>;
   selectedFeature?: string;
   selectedEntities: string[];
   sketchState: SketchState;
@@ -27,14 +31,17 @@ interface ModelState {
   deleteSketchEntity: (entityId: string) => void;
   addConstraint: (constraint: AppConstraint) => void;
   removeConstraint: (constraintId: string) => void;
-  solveConstraints: () => boolean;
+  updateConstraint: (constraintId: string, updates: Partial<AppConstraint>) => void;
+  clearAllConstraints: () => void;
   
-  // Feature actions
+  // Constraint solving
+  solveConstraints: () => void;
+  
+  // 3D Feature actions
   addFeature: (feature: Feature) => void;
+  removeFeature: (featureId: string) => void;
   updateFeature: (featureId: string, updates: Partial<Feature>) => void;
-  deleteFeature: (featureId: string) => void;
-  suppressFeature: (featureId: string, suppressed: boolean) => void;
-  reorderFeature: (featureId: string, newIndex: number) => void;
+  getFeatures: () => Feature[];
   
   // Selection
   setSelection: (entityIds: string[]) => void;
@@ -47,6 +54,10 @@ export const useModelStore = create<ModelState>()(
     activeSketch: undefined,
     selectedFeature: undefined,
     selectedEntities: [],
+    sketches: new Map(),
+    entities: new Map(),
+    constraints: new Map(),
+    features: new Map(),
     sketchState: {
       activeSketch: null,
       sketches: new Map(),
@@ -237,6 +248,32 @@ export const useModelStore = create<ModelState>()(
           }
         }
       });
+    },
+
+    // 3D Feature management
+    addFeature: (feature) => {
+      set((state) => {
+        state.features.set(feature.id, feature);
+      });
+    },
+
+    removeFeature: (featureId) => {
+      set((state) => {
+        state.features.delete(featureId);
+      });
+    },
+
+    updateFeature: (featureId, updates) => {
+      set((state) => {
+        const feature = state.features.get(featureId);
+        if (feature) {
+          Object.assign(feature, updates);
+        }
+      });
+    },
+
+    getFeatures: () => {
+      return Array.from(get().features.values());
     },
 
     setSelection: (entityIds) => {

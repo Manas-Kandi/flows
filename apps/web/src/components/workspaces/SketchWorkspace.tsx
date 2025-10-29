@@ -10,6 +10,9 @@ import { SketchToolbar } from '../sketch/SketchToolbar';
 import { ConstraintToolbar } from '../sketch/ConstraintToolbar';
 import { LineTool } from '../sketch/tools/LineTool';
 import { CircleTool } from '../sketch/tools/CircleTool';
+import { ArcTool } from '../sketch/tools/ArcTool';
+import { RectangleTool } from '../sketch/tools/RectangleTool';
+import { PointTool } from '../sketch/tools/PointTool';
 
 export function SketchWorkspace() {
   const { createSketch, setActiveTool, toolState } = useSketchStore();
@@ -52,6 +55,9 @@ export function SketchWorkspace() {
         {/* Active Tool Components */}
         {toolState.activeTool === 'line' && <LineTool />}
         {toolState.activeTool === 'circle' && <CircleTool />}
+        {toolState.activeTool === 'arc' && <ArcTool />}
+        {toolState.activeTool === 'rectangle' && <RectangleTool />}
+        {toolState.activeTool === 'point' && <PointTool />}
         
         {/* Status Bar */}
         <div className="absolute bottom-0 left-0 right-0 bg-gray-800 border-t border-gray-700 px-4 py-2 flex items-center justify-between text-xs text-gray-400">

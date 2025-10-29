@@ -182,6 +182,39 @@ export function SketchCanvas({ width, height, className = '' }: SketchCanvasProp
         useSketchStore.getState().clearDrawingPoints();
       }
       
+      // Tool shortcuts (only when not in input fields)
+      if (e.target === document.body) {
+        // V - Select tool
+        if (e.key === 'v' || e.key === 'V') {
+          useSketchStore.getState().setActiveTool('select');
+        }
+        
+        // L - Line tool
+        if (e.key === 'l' || e.key === 'L') {
+          useSketchStore.getState().setActiveTool('line');
+        }
+        
+        // C - Circle tool
+        if (e.key === 'c' || e.key === 'C') {
+          useSketchStore.getState().setActiveTool('circle');
+        }
+        
+        // A - Arc tool
+        if (e.key === 'a' || e.key === 'A') {
+          useSketchStore.getState().setActiveTool('arc');
+        }
+        
+        // R - Rectangle tool
+        if (e.key === 'r' || e.key === 'R') {
+          useSketchStore.getState().setActiveTool('rectangle');
+        }
+        
+        // P - Point tool
+        if (e.key === 'p' || e.key === 'P') {
+          useSketchStore.getState().setActiveTool('point');
+        }
+      }
+      
       // Delete - Delete selected entities
       if (e.key === 'Delete' || e.key === 'Backspace') {
         selection.selectedIds.forEach(id => {
@@ -318,6 +351,14 @@ function drawEntity(ctx: CanvasRenderingContext2D, entity: any, isSelected: bool
     case 'arc': {
       ctx.beginPath();
       ctx.arc(entity.center.x, entity.center.y, entity.radius, entity.startAngle, entity.endAngle);
+      ctx.stroke();
+      break;
+    }
+    
+    case 'rectangle': {
+      const { topLeft, bottomRight } = entity;
+      ctx.beginPath();
+      ctx.rect(topLeft.x, topLeft.y, bottomRight.x - topLeft.x, bottomRight.y - topLeft.y);
       ctx.stroke();
       break;
     }
