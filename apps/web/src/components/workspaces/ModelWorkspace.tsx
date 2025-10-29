@@ -5,11 +5,13 @@ import { ExtrudeDialog } from '../model/ExtrudeDialog';
 import { ModelToolbar } from './ModelToolbar';
 import { useViewportStore } from '../../stores/viewportStore';
 import { useFeatureStore } from '../../stores/featureStore';
+import { useSketchStore } from '../../stores/sketchStore';
 import type { SketchPlane, ExtrudeParameters } from '@flows/cad-kernel';
 
 export function ModelWorkspace() {
   const { mode, enterSketchMode, exitSketchMode } = useViewportStore();
   const { addFeature } = useFeatureStore();
+  const { createSketch, setActiveSketch } = useSketchStore();
   
   // Dialog states
   const [showPlaneSelector, setShowPlaneSelector] = useState(false);
@@ -18,8 +20,12 @@ export function ModelWorkspace() {
   
   // Handle sketch creation
   const handleSelectPlane = (plane: SketchPlane) => {
-    const sketchId = `sketch-${Date.now()}`;
+    // Create sketch in sketchStore
+    const sketchId = createSketch(`Sketch on ${plane.name || 'Plane'}`);
     setActiveSketchId(sketchId);
+    setActiveSketch(sketchId);
+    
+    // Enter sketch mode in viewport
     enterSketchMode(plane, sketchId);
     setShowPlaneSelector(false);
   };
@@ -42,6 +48,12 @@ export function ModelWorkspace() {
     addFeature(feature);
     setShowExtrudeDialog(false);
     exitSketchMode();
+  };
+  
+  // Handle exit sketch
+  const handleExitSketch = () => {
+    exitSketchMode();
+    // Note: Keep sketch in store for feature creation later
   };
   
   return (
