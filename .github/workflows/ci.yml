@@ -1,0 +1,91 @@
+name: CI
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+jobs:
+  lint-and-test:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 8
+          
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+        
+      - name: Lint
+        run: pnpm lint
+        
+      - name: Type check
+        run: pnpm type-check
+        
+      - name: Test
+        run: pnpm test
+        
+      - name: Build
+        run: pnpm build
+
+  build-docker:
+    runs-on: ubuntu-latest
+    needs: lint-and-test
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+        
+      - name: Build web image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./apps/web
+          push: false
+          tags: flows-web:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          
+      - name: Build collaboration service
+        uses: docker/build-push-action@v5
+        with:
+          context: ./services/collaboration
+          push: false
+          tags: flows-collaboration:latest
+          
+      - name: Build geometry service
+        uses: docker/build-push-action@v5
+        with:
+          context: ./services/geometry
+          push: false
+          tags: flows-geometry:latest
+
+  security-scan:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'fs'
+          scan-ref: '.'
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+          
+      - name: Upload Trivy results
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: 'trivy-results.sarif'

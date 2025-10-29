@@ -1,0 +1,9 @@
+packages:
+  # Applications
+  - 'apps/*'
+  # Backend Services
+  - 'services/*'
+  # Shared Packages
+  - 'packages/*'
+  # Development Tools
+  - 'tools/*'
