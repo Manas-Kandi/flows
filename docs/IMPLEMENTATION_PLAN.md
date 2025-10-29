@@ -59,55 +59,385 @@ Phased implementation roadmap for parametric CAD features mapped to existing Flo
 
 #### Week 3-4: Constraint Solver Integration
 
-- [ ] **Choose Constraint Solver Library**
-  - **Recommended**: kiwi.js (TypeScript port of Cassowary)
-  - Alternative: Custom Newton-Raphson solver
-  - Install: `pnpm add kiwi.js @types/kiwi` (if available)
+**Status**: ✅ **COMPLETED** - Basic implementation exists (see `CONSTRAINT_SOLVER_INTEGRATION.md`)
+**Next Phase**: Production Hardening & Advanced Features
+
+---
+
+##### Core Solver (✅ DONE)
+
+- [x] **Constraint Solver Library**
+  - ✅ kiwi.js installed and integrated
+  - ✅ Cassowary algorithm working
+  - ✅ 16,960+ lines of code implemented
   
-- [ ] **Constraint System** (`packages/constraint-solver/`)
-  - Create shared package for solver logic
-  - Constraint representation:
+- [x] **Constraint System** (`packages/constraint-solver/`)
+  - ✅ Solver package created
+  - ✅ 15 constraint types implemented
+  - ✅ Entity-to-variable mapping
+  - ✅ DOF calculation
+  
+- [x] **Geometric Constraints**
+  - ✅ Coincident, Horizontal, Vertical
+  - ✅ Parallel, Perpendicular, Tangent
+  - ✅ Equal, Concentric, Fix, Midpoint
+  
+- [x] **Dimensional Constraints**
+  - ✅ Distance, Radius, Diameter, Angle
+  
+- [x] **Basic UI**
+  - ✅ Constraint toolbar
+  - ✅ Constraint visualization
+  - ✅ Auto-solving on changes
+
+---
+
+##### 🔴 CRITICAL GAPS - Must Add for Production
+
+- [ ] **Testing Infrastructure** (P0 - 3 days)
+  - Unit tests for constraint solver
     ```typescript
-    interface Constraint {
-      id: string;
-      type: 'coincident' | 'distance' | 'parallel' | ...;
-      entities: string[]; // Entity IDs
-      parameters: Record<string, number>;
-      strength?: 'required' | 'strong' | 'medium' | 'weak';
+    // packages/constraint-solver/__tests__/solver.test.ts
+    describe('ConstraintSolver', () => {
+      test('coincident constraint on two points');
+      test('horizontal constraint on line');
+      test('distance constraint with value');
+      test('over-constrained system detection');
+      test('under-constrained DOF calculation');
+    });
+    ```
+  - Integration tests for UI workflows
+  - Edge case testing:
+    - Over-constrained systems
+    - Conflicting constraints
+    - Degenerate geometry (zero-length lines)
+    - Circular constraint dependencies
+  - Performance benchmarks (target: <100ms for 50 constraints)
+  - Test fixtures library:
+    ```typescript
+    // Common test sketches
+    - constrained_rectangle.json
+    - tangent_circles.json
+    - complex_pattern_50_constraints.json
+    ```
+  - **Files**: `__tests__/solver.test.ts`, `__tests__/constraints.test.ts`, `__tests__/fixtures/`
+  - **Tools**: Vitest or Jest
+  
+- [ ] **Constraint Editing UI** (P0 - 4 days)
+  - **Dimension Edit Dialog**
+    ```typescript
+    interface DimensionEditDialog {
+      constraint: Constraint;
+      currentValue: number;
+      unit: 'mm' | 'in' | 'cm';
+      expression?: string; // e.g., "=width * 2"
     }
     ```
+  - Double-click dimension to edit value
+  - Expression support (link to parameters)
+  - Real-time preview during edit
+  - Input validation (positive values, range checks)
+  - Unit conversion
+  - **Component**: `components/sketch/DimensionEditDialog.tsx`
   
-- [ ] **Geometric Constraints**
-  - Coincident (2 points same location)
-  - Horizontal/Vertical (line angle = 0°/90°)
-  - Parallel/Perpendicular (angle between lines)
-  - Fix (lock entity position)
+- [ ] **Constraint Management** (P0 - 3 days)
+  - **Constraint Inspector Panel**
+    - List all constraints on selected entity
+    - Show constraint type, entities, parameters
+    - Delete constraint button
+    - Edit constraint parameters
+    - Enable/disable (suppress) constraints
+  - **Conflict Resolution UI**
+    ```typescript
+    interface ConflictResolution {
+      conflicts: Constraint[];
+      suggestions: {
+        removeConstraint: Constraint;
+        reason: string;
+      }[];
+    }
+    ```
+  - Show which constraints conflict
+  - Suggest which to remove
+  - **Component**: `components/sketch/ConstraintInspector.tsx`
   
-- [ ] **Dimensional Constraints**
-  - Distance (linear dimension)
-  - Radius/Diameter (circle/arc)
-  - Angle (between lines)
+- [ ] **Drag Behavior Enhancement** (P0 - 4 days)
+  - **Smart dragging with constraints**
+    - Identify which variables to keep fixed during drag
+    - Lock dragged entity, solve for rest
+    - Show "ghost" preview during drag
+    - Fallback if solve fails during drag
+  - **Drag modes**:
+    ```typescript
+    enum DragMode {
+      FREE,           // Ignore constraints (Ctrl held)
+      CONSTRAINED,    // Respect all constraints (default)
+      DIMENSIONAL,    // Only geometric constraints (Shift held)
+    }
+    ```
+  - **Implementation**: Modify `SketchCanvas.tsx` drag handlers
+  - **Performance**: Throttle solving to 60fps during drag
   
-- [ ] **Solver Integration**
-  - Build constraint system from sketch entities
-  - Solve on: entity creation, drag, constraint add
-  - Handle solve failures gracefully
-  - Degrees of freedom (DOF) display
+- [ ] **Error Handling & Diagnostics** (P0 - 3 days)
+  - **Over-Constraint Detection**
+    - Calculate expected DOF vs actual DOF
+    - Identify redundant constraints
+    - Visual warning indicator
+    - Suggest constraint to remove
+  - **Conflict Detection**
+    - Detect contradictory constraints (e.g., distance=10 and distance=20)
+    - Show error message with constraint IDs
+    - Highlight conflicting constraints in red
+  - **Solver Failure Recovery**
+    ```typescript
+    interface SolverFailure {
+      reason: 'over_constrained' | 'conflicting' | 'degenerate';
+      problematicConstraints: string[];
+      suggestion: string;
+      canRevert: boolean;
+    }
+    ```
+  - Revert to last good state on failure
+  - Log detailed error info to console
+  - User-friendly error messages (no technical jargon)
+  - **Component**: `components/sketch/SolverErrorDialog.tsx`
 
-- [ ] **Constraint UI**
-  - Constraint palette toolbar
-  - Dimension input dialogs
-  - Constraint visualization (symbols, dimension lines)
-  - Auto-constraints on entity creation
+---
 
-**Deliverables**:
-- Working constraint solver
-- Basic constraints functional
-- Dimensional constraints drive geometry
+##### 🟡 HIGH PRIORITY - Production Polish
 
-**LOC Estimate**: ~3,500 lines
-**Dependencies**: kiwi.js or similar
-**Challenge**: This is the HARDEST part of sketching
+- [ ] **Performance Optimization** (P1 - 5 days)
+  - **Incremental Solving**
+    - Only re-solve affected constraints
+    - Dirty marking system for entities/constraints
+    - Constraint dependency graph
+    ```typescript
+    class IncrementalSolver {
+      private dirtyConstraints: Set<string>;
+      private constraintGraph: DependencyGraph;
+      
+      markDirty(entityId: string): void;
+      solveIncremental(): SolverResult;
+    }
+    ```
+  - **Spatial Indexing**
+    - Quad-tree for snap detection
+    - Accelerate constraint application
+    - **Library**: Consider `flatbush` or custom quad-tree
+  - **Solving Optimizations**:
+    - Debounce rapid constraint changes (100ms)
+    - Throttle during continuous operations (drag)
+    - Web Worker for heavy solves (>50 constraints)
+    - Cache solver state between minor changes
+  - **Performance Metrics Dashboard**:
+    - Show solve time in status bar
+    - Track constraint count vs performance
+    - Warning if solve >200ms
+  - **Files**: `packages/constraint-solver/src/incremental.ts`
+  
+- [ ] **Advanced Constraint Types** (P1 - 6 days)
+  - **Pattern Constraints**
+    - Linear pattern (equally spaced)
+    - Circular pattern (angular spacing)
+    ```typescript
+    interface PatternConstraint {
+      type: 'linear_pattern' | 'circular_pattern';
+      entities: string[]; // Entities to pattern
+      count: number;
+      spacing: number; // distance or angle
+      direction?: Vector2D; // for linear
+      center?: Point2D;   // for circular
+    }
+    ```
+  - **Symmetric Constraint**
+    - Mirror two entities across a line
+    - Maintain symmetry during edits
+  - **Offset Constraint**
+    - Maintain constant offset between parallel lines/curves
+  - **Colinear Constraint**
+    - Force points to lie on same line
+  - **Smooth Constraint (G2 continuity)**
+    - Curvature continuity for splines
+  - **Files**: `packages/constraint-solver/src/constraints/advanced.ts`
+  
+- [ ] **Auto-Constraint System** (P1 - 4 days)
+  - **Smart inference rules**
+    ```typescript
+    interface AutoConstraintRule {
+      condition: (entity: Entity, context: SketchContext) => boolean;
+      constraint: ConstraintType;
+      tolerance: number;
+    }
+    ```
+  - **Rules to implement**:
+    - Auto-horizontal if within 5° of horizontal
+    - Auto-vertical if within 5° of vertical
+    - Auto-perpendicular if within 5° of 90°
+    - Auto-parallel if within 5° of another line
+    - Auto-tangent if circle touches curve within tolerance
+    - Auto-coincident if points within snap distance
+  - **User controls**:
+    - Enable/disable auto-constraints (settings)
+    - Adjust tolerance values
+    - Show/hide auto-constraint symbols differently
+    - Confirm before applying (optional mode)
+  - **Visual feedback**:
+    - Different color for auto-constraints (gray vs green)
+    - "Auto" badge on constraint symbol
+    - Toast notification: "Auto-horizontal applied"
+  - **Files**: `packages/constraint-solver/src/auto-constraints.ts`
+  
+- [ ] **Constraint Serialization** (P1 - 2 days)
+  - **Save/Load constraint systems**
+    ```typescript
+    interface SerializedConstraintSystem {
+      version: '1.0';
+      entities: EntityData[];
+      constraints: ConstraintData[];
+      parameters: ParameterData[];
+      metadata: {
+        createdAt: string;
+        modifiedAt: string;
+        solverVersion: string;
+      };
+    }
+    ```
+  - JSON export/import
+  - Backward compatibility handling
+  - Migration system for format changes
+  - **Files**: `packages/constraint-solver/src/serialization.ts`
+
+---
+
+##### 🟢 MEDIUM PRIORITY - Future Enhancements
+
+- [ ] **Constraint Strength System** (P2 - 3 days)
+  - Currently only "required" strength used
+  - Implement full strength hierarchy:
+    - `required` - Must be satisfied (current)
+    - `strong` - Preferred, can be broken
+    - `medium` - Suggestion
+    - `weak` - Hint only
+  - Use cases:
+    - Weak constraints for initial layout
+    - Strong constraints for important relationships
+    - Required for critical dimensions
+  - **UI**: Constraint strength selector in toolbar
+  
+- [ ] **Undo/Redo for Constraints** (P2 - 2 days)
+  - Command pattern for constraint operations
+    ```typescript
+    class AddConstraintCommand implements Command {
+      execute(): void;
+      undo(): void;
+      redo(): void;
+    }
+    ```
+  - Integrate with existing undo system
+  - Track constraint parameter changes
+  - **Files**: `stores/commandHistory.ts`
+  
+- [ ] **Constraint Visualization Enhancements** (P2 - 3 days)
+  - **Symbol improvements**:
+    - Hover to highlight related entities
+    - Click symbol to select constraint
+    - Show constraint name on hover
+    - Animation when constraint applied
+  - **Dimension improvements**:
+    - Aligned dimension text (always readable)
+    - Witness lines for offset dimensions
+    - Reference dimensions (gray, non-driving)
+    - Driven dimensions (driven by others)
+  - **Color coding**:
+    - Green: Satisfied constraints
+    - Yellow: Under-constrained
+    - Red: Over-constrained/conflicting
+    - Gray: Suppressed constraints
+  
+- [ ] **Constraint Templates** (P2 - 2 days)
+  - Pre-built constraint sets
+    - "Fully constrain rectangle"
+    - "Symmetric about centerline"
+    - "Equal spacing pattern"
+  - Save custom templates
+  - Apply template to selection
+  - **UI**: Template library panel
+
+---
+
+##### 📚 Documentation & Examples
+
+- [ ] **Developer Documentation** (P1 - 3 days)
+  - **Constraint Solver API docs**
+    ```markdown
+    # Constraint Solver API
+    
+    ## Adding a New Constraint Type
+    
+    1. Add type to `ConstraintType` enum
+    2. Implement `buildConstraint()` method
+    3. Add to entity compatibility matrix
+    4. Create visualization renderer
+    5. Add toolbar button and icon
+    6. Write tests
+    ```
+  - Architecture diagrams (flow charts)
+  - Code examples for common tasks
+  - Troubleshooting guide
+  - Performance optimization tips
+  - **Files**: `docs/CONSTRAINT_SOLVER_API.md`
+  
+- [ ] **User Guide** (P2 - 2 days)
+  - Constraint workflow tutorials
+  - Video walkthroughs (screen recordings)
+  - Best practices
+  - Common mistakes and how to fix
+  - Keyboard shortcuts reference
+  - **Files**: `docs/USER_GUIDE_CONSTRAINTS.md`
+  
+- [ ] **Example Sketches** (P2 - 2 days)
+  - Library of example constrained sketches
+    - Simple: Rectangle, circle, triangle
+    - Intermediate: Gears, brackets, patterns
+    - Advanced: Linkages, cams, complex assemblies
+  - Each with step-by-step creation guide
+  - Exportable as JSON templates
+  - **Files**: `examples/sketches/*.json`
+
+---
+
+**Updated Deliverables**:
+- ✅ Working constraint solver (DONE)
+- ✅ Basic constraints functional (DONE)
+- ✅ Dimensional constraints drive geometry (DONE)
+- 🔴 Production-ready testing suite (NEEDED)
+- 🔴 Constraint editing UI (NEEDED)
+- 🔴 Advanced error handling (NEEDED)
+- 🔴 Performance optimization (NEEDED)
+- 🟡 Advanced constraint types (NICE TO HAVE)
+- 📚 Comprehensive documentation (NEEDED)
+
+**Updated LOC Estimate**: 
+- Completed: ~16,960 lines ✅
+- Remaining Critical: ~5,000 lines 🔴
+- Remaining Nice-to-Have: ~3,000 lines 🟡
+- **Total**: ~25,000 lines
+
+**Updated Timeline**:
+- Week 3-4: ✅ Basic implementation (DONE)
+- **Week 5: Testing + Constraint Editing (5 days)**
+- **Week 6: Error Handling + Drag Behavior (5 days)**
+- **Week 7: Performance + Auto-Constraints (5 days)**
+- **Week 8: Polish + Documentation (5 days)**
+
+**Dependencies**: 
+- ✅ kiwi.js (installed)
+- Vitest or Jest (for testing)
+- flatbush (optional, for spatial indexing)
+
+**Challenge**: 
+This is the HARDEST part of sketching ✅ **ACHIEVED**  
+**New Challenge**: Production hardening and edge case handling
 
 ---
 
