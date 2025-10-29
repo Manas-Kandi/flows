@@ -2,7 +2,7 @@ import { create } from 'zustand';
 import { immer } from 'zustand/middleware/immer';
 import type { Part, Sketch, Feature, SketchEntity } from '../types';
 import type { Constraint as AppConstraint } from '../types';
-import { ConstraintSolver, type Constraint, type EntityGeometry } from '@flows/constraint-solver';
+import { ConstraintSolver, type Constraint } from '@flows/constraint-solver';
 import { createEntityGeometry, updateEntityGeometry } from '@flows/constraint-solver';
 
 interface SketchState {
@@ -132,6 +132,24 @@ export const useModelStore = create<ModelState>()(
       });
     },
 
+    updateConstraint: (constraintId, updates) => {
+      set((state) => {
+        if (state.activeSketch) {
+          const constraint = state.activeSketch.constraints.find(
+            (c) => c.id === constraintId
+          );
+          if (constraint) {
+            Object.assign(constraint, updates);
+          }
+        }
+        // Also update in sketchState
+        const stateConstraint = state.sketchState.constraints.get(constraintId);
+        if (stateConstraint) {
+          Object.assign(stateConstraint, updates);
+        }
+      });
+    },
+
     solveConstraints: () => {
       const { sketchState, constraintSolver } = get();
       
@@ -194,25 +212,6 @@ export const useModelStore = create<ModelState>()(
     clearAllConstraints: () => {
       set((state) => {
         state.sketchState.constraints.clear();
-      });
-    },
-
-    addFeature: (feature) => {
-      set((state) => {
-        if (state.currentPart) {
-          state.currentPart.features.push(feature);
-        }
-      });
-    },
-
-    updateFeature: (featureId, updates) => {
-      set((state) => {
-        if (state.currentPart) {
-          const feature = state.currentPart.features.find((f) => f.id === featureId);
-          if (feature) {
-            Object.assign(feature, updates);
-          }
-        }
       });
     },
 
