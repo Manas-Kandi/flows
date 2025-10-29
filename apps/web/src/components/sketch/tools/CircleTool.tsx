@@ -4,6 +4,7 @@
 
 import { useEffect } from 'react';
 import { useSketchStore } from '../../../stores/sketchStore';
+import { useModelStore } from '../../../stores/modelStore';
 import { distance } from '../../../lib/sketch/geometry';
 import type { SketchCircle } from '../../../types/sketch';
 
@@ -14,6 +15,8 @@ export function CircleTool() {
     addEntity,
     clearDrawingPoints,
   } = useSketchStore();
+  
+  const { solveConstraints } = useModelStore();
   
   useEffect(() => {
     // Update preview as cursor moves
@@ -53,13 +56,18 @@ export function CircleTool() {
         isConstruction: false,
         isSelected: false,
         isHighlighted: false,
-      });
+      } as any);
       
       // Reset for next circle
       clearDrawingPoints();
       setPreviewEntity(null);
+      
+      // Auto-solve constraints after entity creation
+      setTimeout(() => {
+        solveConstraints();
+      }, 100);
     }
-  }, [toolState.currentPoints.length, toolState.currentPoints, addEntity, clearDrawingPoints, setPreviewEntity]);
+  }, [toolState.currentPoints.length, toolState.currentPoints, addEntity, clearDrawingPoints, setPreviewEntity, solveConstraints]);
   
   return null;
 }

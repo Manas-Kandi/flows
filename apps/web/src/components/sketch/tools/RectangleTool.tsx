@@ -1,13 +1,13 @@
 /**
- * Line Tool - Draw lines and polylines in sketch
+ * Rectangle Tool - Draw rectangles in sketch (2-point mode)
  */
 
 import { useEffect } from 'react';
 import { useSketchStore } from '../../../stores/sketchStore';
 import { useModelStore } from '../../../stores/modelStore';
-import type { SketchLine } from '../../../types/sketch';
+import type { SketchRectangle } from '../../../types/sketch';
 
-export function LineTool() {
+export function RectangleTool() {
   const {
     toolState,
     setPreviewEntity,
@@ -20,20 +20,26 @@ export function LineTool() {
   
   useEffect(() => {
     // Update preview as cursor moves
-    if (toolState.currentPoints.length > 0 && toolState.cursorPosition) {
-      const start = toolState.currentPoints[toolState.currentPoints.length - 1];
-      const end = toolState.snappedPosition || toolState.cursorPosition;
+    if (toolState.currentPoints.length === 1 && toolState.cursorPosition) {
+      const corner1 = toolState.currentPoints[0];
+      const corner2 = toolState.snappedPosition || toolState.cursorPosition;
       
-      const previewLine: Partial<SketchLine> = {
-        type: 'line',
-        start,
-        end,
+      const previewRect: Partial<SketchRectangle> = {
+        type: 'rectangle',
+        topLeft: {
+          x: Math.min(corner1.x, corner2.x),
+          y: Math.max(corner1.y, corner2.y),
+        },
+        bottomRight: {
+          x: Math.max(corner1.x, corner2.x),
+          y: Math.min(corner1.y, corner2.y),
+        },
         isConstruction: false,
         isSelected: false,
         isHighlighted: false,
       };
       
-      setPreviewEntity(previewLine as any);
+      setPreviewEntity(previewRect as any);
     } else {
       setPreviewEntity(null);
     }
@@ -41,38 +47,43 @@ export function LineTool() {
   
   useEffect(() => {
     // Handle point placement
-    if (toolState.currentPoints.length >= 2) {
-      // Create line from last two points
-      const points = toolState.currentPoints;
-      const start = points[points.length - 2];
-      const end = points[points.length - 1];
+    if (toolState.currentPoints.length === 2) {
+      // Create rectangle from two corners
+      const corner1 = toolState.currentPoints[0];
+      const corner2 = toolState.currentPoints[1];
       
-      // Add line entity
+      // Add rectangle entity
       addEntity({
-        type: 'line',
-        start,
-        end,
+        type: 'rectangle',
+        topLeft: {
+          x: Math.min(corner1.x, corner2.x),
+          y: Math.min(corner1.y, corner2.y),
+        },
+        bottomRight: {
+          x: Math.max(corner1.x, corner2.x),
+          y: Math.max(corner1.y, corner2.y),
+        },
         isConstruction: false,
         isSelected: false,
         isHighlighted: false,
       } as any);
       
-      // Continue in polyline mode - keep last point as start of next line
+      // Reset for next rectangle
       clearDrawingPoints();
-      useSketchStore.getState().addDrawingPoint(end);
+      setPreviewEntity(null);
       
       // Auto-solve constraints after entity creation
       setTimeout(() => {
         solveConstraints();
       }, 100);
     }
-  }, [toolState.currentPoints.length, toolState.currentPoints, addEntity, clearDrawingPoints, solveConstraints]);
+  }, [toolState.currentPoints.length, toolState.currentPoints, addEntity, clearDrawingPoints, setPreviewEntity, solveConstraints]);
   
   // Keyboard handlers
   useEffect(() => {
     const handleKeyPress = (e: KeyboardEvent) => {
       if (e.key === 'Enter' || e.key === 'Escape') {
-        // Finish polyline
+        // Cancel current rectangle
         clearDrawingPoints();
         setPreviewEntity(null);
         if (e.key === 'Escape') {

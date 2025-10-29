@@ -4,6 +4,8 @@
 
 import { Point2D, Vector2D } from './cad';
 
+export type { Point2D };
+
 // ============================================================================
 // Sketch Entity Types
 // ============================================================================
@@ -117,12 +119,12 @@ export type ConstraintType =
   | 'equal'
   | 'concentric'
   | 'symmetric'
-  | 'fix'
-  | 'midpoint'
   | 'distance'
   | 'radius'
-  | 'diameter'
-  | 'angle';
+  | 'angle'
+  | 'fix'
+  | 'midpoint'
+  | 'diameter';
 
 export interface BaseConstraint {
   id: string;

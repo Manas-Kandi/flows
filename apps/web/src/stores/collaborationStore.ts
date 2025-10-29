@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { immer } from 'zustand/middleware/immer';
-import type { User } from '@types/index';
+import type { User } from '../types';
 
 interface CollaborationState {
   currentUser?: User;

@@ -1,6 +1,6 @@
 import { createContext, useContext, ReactNode, useEffect } from 'react';
 import { useCollaborationStore } from '@stores/collaborationStore';
-import type { User } from '@types/index';
+import type { User } from '../types';
 
 interface CollaborationContextType {
   currentUser?: User;

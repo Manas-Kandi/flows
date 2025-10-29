@@ -4,9 +4,13 @@
 
 import React, { useRef, useEffect, useCallback, useState } from 'react';
 import { useSketchStore } from '../../stores/sketchStore';
+import { useModelStore } from '../../stores/modelStore';
+import type { SketchEntity } from '../../types/sketch';
+import type { Constraint } from '../../types';
 import type { Point2D } from '../../types';
 import { SnapDetector } from '../../lib/sketch/snapSystem';
 import { snapToGrid, snapToAngle, degToRad } from '../../lib/sketch/geometry';
+import { drawConstraints } from './ConstraintVisualization';
 
 interface SketchCanvasProps {
   width: number;
@@ -33,6 +37,8 @@ export function SketchCanvas({ width, height, className = '' }: SketchCanvasProp
     setIsDrawing,
     addDrawingPoint,
   } = useSketchStore();
+  
+  const { sketchState } = useModelStore();
   
   // =========================================================================
   // Coordinate Transformation
@@ -148,6 +154,12 @@ export function SketchCanvas({ width, height, className = '' }: SketchCanvasProp
       drawSnapIndicator(ctx, toolState.snapTarget.position, toolState.snapTarget.type);
     }
     
+    // Draw constraints
+    const constraints = Array.from(sketchState.constraints.values());
+    // Convert entities to the correct type for constraint visualization
+    const sketchEntities = new Map(sketchState.entities) as any;
+    drawConstraints(ctx, constraints, sketchEntities);
+    
     // Draw cursor crosshair
     if (toolState.cursorPosition) {
       drawCursor(ctx, toolState.snappedPosition || toolState.cursorPosition);
@@ -156,7 +168,7 @@ export function SketchCanvas({ width, height, className = '' }: SketchCanvasProp
     // Restore context
     ctx.restore();
     
-  }, [width, height, gridSize, gridVisible, getAllEntities, selection, toolState]);
+  }, [width, height, gridSize, gridVisible, getAllEntities, selection, toolState, sketchState]);
   
   // =========================================================================
   // Keyboard Handlers

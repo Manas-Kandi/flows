@@ -1,6 +1,6 @@
 import { createContext, useContext, ReactNode } from 'react';
 import { useWorkspaceStore } from '@stores/workspaceStore';
-import type { WorkspaceMode } from '@types/index';
+import type { WorkspaceMode } from '../types';
 
 interface WorkspaceContextType {
   currentMode: WorkspaceMode;

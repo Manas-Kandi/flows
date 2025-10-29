@@ -9,7 +9,7 @@ import {
   MousePointer, 
   Minus, 
   Circle, 
-  ArcIcon as Arc,
+  Circle as Arc,
   Square,
   Grid3x3,
   Scissors,

@@ -14,7 +14,7 @@ import {
   Save,
   Users
 } from 'lucide-react';
-import type { WorkspaceMode } from '@types/index';
+import type { WorkspaceMode } from '../../types';
 
 const workspaceModes: { mode: WorkspaceMode; icon: any; label: string }[] = [
   { mode: 'model', icon: Box, label: 'Model' },

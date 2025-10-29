@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { immer } from 'zustand/middleware/immer';
-import type { WorkspaceMode, Project, Part, Assembly } from '@types/index';
+import type { WorkspaceMode, Project, Part, Assembly } from '../types';
 
 interface WorkspaceState {
   // Current workspace state
