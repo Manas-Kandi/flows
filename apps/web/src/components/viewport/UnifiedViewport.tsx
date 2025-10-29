@@ -6,13 +6,16 @@
 import { Canvas } from '@react-three/fiber';
 import { OrbitControls, Grid } from '@react-three/drei';
 import { useViewportStore } from '../../stores/viewportStore';
+import { useSketchStore } from '../../stores/sketchStore';
 import { CADLighting, SketchLighting } from '../../rendering/LightingSetup';
 import { AdaptiveCamera } from './AdaptiveCamera';
 import { SketchRenderer } from './SketchRenderer';
 import { ModelRenderer } from './ModelRenderer';
 import { PlaneRenderer } from './PlaneRenderer';
+import { Sketch3DInteraction } from './Sketch3DInteraction';
 import { useEffect, useRef } from 'react';
 import * as THREE from 'three';
+import { Minus, Circle, Square, Spline, Circle as CircleDot } from 'lucide-react';
 
 export enum RenderLayer {
   GRID = 0,
@@ -96,13 +99,22 @@ export function UnifiedViewport() {
         {/* Sketch Planes (when in sketch mode or showing planes) */}
         {(showPlanes || mode === 'sketch') && <PlaneRenderer />}
         
-        {/* Active Sketch Renderer (2D mode) */}
+        {/* Active Sketch Renderer */}
         {mode === 'sketch' && activeSketch && activePlane && (
-          <SketchRenderer
-            sketchId={activeSketch}
-            plane={activePlane}
-            layer={RenderLayer.SKETCH}
-          />
+          <>
+            {/* Render sketch entities in 3D */}
+            <SketchRenderer
+              sketchId={activeSketch}
+              plane={activePlane}
+              layer={RenderLayer.SKETCH}
+            />
+            
+            {/* Handle drawing interactions */}
+            <Sketch3DInteraction
+              plane={activePlane}
+              enabled={true}
+            />
+          </>
         )}
         
         {/* 3D Model Renderer */}
@@ -134,13 +146,69 @@ export function UnifiedViewport() {
 }
 
 /**
+ * Compact sketch tools - icon-only buttons
+ */
+function CompactSketchTools() {
+  const { toolState, setActiveTool } = useSketchStore();
+  const activeTool = toolState.activeTool;
+  
+  const tools = [
+    { name: 'select', icon: CircleDot, label: 'S' },
+    { name: 'line', icon: Minus, label: 'L' },
+    { name: 'circle', icon: Circle, label: 'C' },
+    { name: 'rectangle', icon: Square, label: 'R' },
+    { name: 'arc', icon: Spline, label: 'A' },
+  ];
+  
+  return (
+    <>
+      {tools.map((tool) => (
+        <button
+          key={tool.name}
+          onClick={() => setActiveTool(tool.name as any)}
+          className={`w-8 h-8 flex items-center justify-center rounded transition-colors ${
+            activeTool === tool.name
+              ? 'bg-blue-600 text-white'
+              : 'text-gray-700 hover:bg-gray-100'
+          }`}
+          title={tool.name}
+        >
+          <tool.icon size={16} />
+        </button>
+      ))}
+    </>
+  );
+}
+
+/**
  * Viewport overlay for controls and info
  */
 function ViewportOverlay() {
-  const { mode, viewPreset, renderStyle, setViewPreset, setRenderStyle } = useViewportStore();
+  const { mode, viewPreset, renderStyle, setViewPreset, setRenderStyle, exitSketchMode } = useViewportStore();
   
   return (
     <div className="absolute inset-0 pointer-events-none">
+      {/* Compact Sketch Toolbar - Only in sketch mode */}
+      {mode === 'sketch' && (
+        <div className="absolute left-4 top-1/2 -translate-y-1/2 pointer-events-auto">
+          <div className="bg-white/95 backdrop-blur rounded-lg shadow-lg p-1 flex flex-col gap-0.5">
+            <CompactSketchTools />
+          </div>
+        </div>
+      )}
+      
+      {/* Finish Sketch Button - Only in sketch mode */}
+      {mode === 'sketch' && (
+        <div className="absolute top-4 left-4 pointer-events-auto">
+          <button
+            onClick={exitSketchMode}
+            className="px-3 py-1.5 bg-blue-600 text-white rounded shadow-lg hover:bg-blue-700 transition-colors font-medium text-xs"
+          >
+            Finish
+          </button>
+        </div>
+      )}
+      
       {/* Top Right - View Controls */}
       <div className="absolute top-4 right-4 flex flex-col gap-2 pointer-events-auto">
         <div className="bg-white/90 backdrop-blur rounded-lg shadow-lg p-2">

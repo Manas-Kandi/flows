@@ -7,7 +7,7 @@ import { useMemo } from 'react';
 import * as THREE from 'three';
 import type { SketchPlane } from '@flows/cad-kernel';
 import { sketchToWorld } from '@flows/cad-kernel';
-import { useModelStore } from '../../stores/modelStore';
+import { useSketchStore } from '../../stores/sketchStore';
 import { SketchMaterials } from '../../rendering/MaterialSystem';
 
 interface SketchRendererProps {
@@ -17,16 +17,16 @@ interface SketchRendererProps {
 }
 
 export function SketchRenderer({ sketchId, plane, layer }: SketchRendererProps) {
-  const sketch = useModelStore((state) => 
-    state.sketches.get(sketchId)
-  );
+  // Get entities from sketchStore for real-time updates
+  const { getAllEntities } = useSketchStore();
+  const entities = getAllEntities();
   
-  if (!sketch) return null;
+  if (entities.length === 0) return null;
   
   return (
     <group name={`sketch-${sketchId}`} layers={layer}>
-      {/* Render each sketch entity */}
-      {sketch.entities.map((entity) => (
+      {/* Render each sketch entity in 3D on the plane */}
+      {entities.map((entity: any) => (
         <SketchEntity
           key={entity.id}
           entity={entity}

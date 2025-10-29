@@ -102,24 +102,38 @@ function createFeatureGeometry(feature: any): THREE.BufferGeometry {
   switch (feature.type) {
     case 'extrude': {
       const params = feature.parameters;
-      const distance = params?.distance || 10;
-      // Simple box as placeholder
-      return new THREE.BoxGeometry(50, 50, distance);
+      const distance = params?.distance || 50;
+      const direction = params?.direction || 'normal';
+      
+      // Create a visible box based on extrude parameters
+      let height = distance;
+      if (direction === 'symmetric') {
+        height = distance; // Full height for symmetric
+      }
+      
+      // Make it more visible
+      return new THREE.BoxGeometry(100, 100, height);
     }
     
     case 'revolve': {
       // Simple cylinder as placeholder
-      return new THREE.CylinderGeometry(25, 25, 50, 32);
+      const params = feature.parameters;
+      const angle = params?.angle || 360;
+      const radius = 50;
+      const height = 100;
+      
+      return new THREE.CylinderGeometry(radius, radius, height, 32, 1, false, 0, (angle * Math.PI) / 180);
     }
     
     case 'fillet':
     case 'chamfer': {
       // Return parent geometry (would modify edges in production)
-      return new THREE.BoxGeometry(50, 50, 50);
+      return new THREE.BoxGeometry(100, 100, 100);
     }
     
     default:
-      return new THREE.BoxGeometry(10, 10, 10);
+      // Default visible geometry
+      return new THREE.BoxGeometry(50, 50, 50);
   }
 }
 
