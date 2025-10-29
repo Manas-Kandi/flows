@@ -1,0 +1,46 @@
+{
+  "name": "Tangent Circles",
+  "description": "Two circles with tangent constraint",
+  "entities": [
+    {
+      "id": "circle-1",
+      "type": "circle",
+      "center": { "x": 0, "y": 0 },
+      "radius": 25
+    },
+    {
+      "id": "circle-2",
+      "type": "circle",
+      "center": { "x": 60, "y": 0 },
+      "radius": 35
+    }
+  ],
+  "constraints": [
+    {
+      "id": "c1",
+      "type": "fix",
+      "entities": ["circle-1"],
+      "parameters": {}
+    },
+    {
+      "id": "c2",
+      "type": "tangent",
+      "entities": ["circle-1", "circle-2"],
+      "parameters": { "external": true }
+    },
+    {
+      "id": "c3",
+      "type": "radius",
+      "entities": ["circle-1"],
+      "parameters": { "value": 25 }
+    },
+    {
+      "id": "c4",
+      "type": "radius",
+      "entities": ["circle-2"],
+      "parameters": { "value": 35 }
+    }
+  ],
+  "expectedDOF": 1,
+  "expectedDistance": 60
+}

@@ -3,6 +3,7 @@
  */
 
 export { ConstraintSolver } from './solver';
+export { SolverDiagnostics } from './diagnostics';
 export type { 
   Constraint, 
   ConstraintSystem, 
@@ -13,4 +14,5 @@ export type {
   ConstraintType,
   ConstraintStrength 
 } from './types';
+export type { DiagnosticResult, SolverFailure } from './diagnostics';
 export { createEntityGeometry, updateEntityGeometry, calculateDOF } from './geometry';

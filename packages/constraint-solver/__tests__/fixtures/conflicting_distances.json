@@ -1,0 +1,39 @@
+{
+  "name": "Conflicting Distance Constraints",
+  "description": "Two points with conflicting distance constraints",
+  "entities": [
+    {
+      "id": "point-1",
+      "type": "point",
+      "position": { "x": 0, "y": 0 }
+    },
+    {
+      "id": "point-2",
+      "type": "point",
+      "position": { "x": 50, "y": 0 }
+    }
+  ],
+  "constraints": [
+    {
+      "id": "c1",
+      "type": "fix",
+      "entities": ["point-1"],
+      "parameters": {}
+    },
+    {
+      "id": "c2",
+      "type": "distance",
+      "entities": ["point-1", "point-2"],
+      "parameters": { "value": 50 }
+    },
+    {
+      "id": "c3",
+      "type": "distance",
+      "entities": ["point-1", "point-2"],
+      "parameters": { "value": 75 }
+    }
+  ],
+  "expectedDOF": -1,
+  "hasConflict": true,
+  "conflictingConstraints": ["c2", "c3"]
+}

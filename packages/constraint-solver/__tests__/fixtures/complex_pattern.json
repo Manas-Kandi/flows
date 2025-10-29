@@ -1,0 +1,7 @@
+{
+  "name": "Complex Pattern - 50+ Constraints",
+  "description": "Performance test with multiple constrained patterns",
+  "entities": [],
+  "constraints": [],
+  "notes": "This fixture is generated programmatically in tests to create exactly 50+ constraints for performance testing"
+}

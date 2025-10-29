@@ -1,0 +1,82 @@
+{
+  "name": "Over-Constrained Square",
+  "description": "Square with redundant constraints to test over-constraint detection",
+  "entities": [
+    {
+      "id": "line-1",
+      "type": "line",
+      "start": { "x": 0, "y": 0 },
+      "end": { "x": 50, "y": 0 }
+    },
+    {
+      "id": "line-2",
+      "type": "line",
+      "start": { "x": 50, "y": 0 },
+      "end": { "x": 50, "y": 50 }
+    },
+    {
+      "id": "line-3",
+      "type": "line",
+      "start": { "x": 50, "y": 50 },
+      "end": { "x": 0, "y": 50 }
+    },
+    {
+      "id": "line-4",
+      "type": "line",
+      "start": { "x": 0, "y": 50 },
+      "end": { "x": 0, "y": 0 }
+    }
+  ],
+  "constraints": [
+    {
+      "id": "c1",
+      "type": "horizontal",
+      "entities": ["line-1"],
+      "parameters": {}
+    },
+    {
+      "id": "c2",
+      "type": "vertical",
+      "entities": ["line-2"],
+      "parameters": {}
+    },
+    {
+      "id": "c3",
+      "type": "horizontal",
+      "entities": ["line-3"],
+      "parameters": {}
+    },
+    {
+      "id": "c4",
+      "type": "vertical",
+      "entities": ["line-4"],
+      "parameters": {}
+    },
+    {
+      "id": "c5",
+      "type": "distance",
+      "entities": ["line-1", "line-3"],
+      "parameters": { "value": 50 }
+    },
+    {
+      "id": "c6",
+      "type": "distance",
+      "entities": ["line-2", "line-4"],
+      "parameters": { "value": 50 }
+    },
+    {
+      "id": "c7",
+      "type": "equal",
+      "entities": ["line-1", "line-2"],
+      "parameters": {}
+    },
+    {
+      "id": "c8",
+      "type": "equal",
+      "entities": ["line-3", "line-4"],
+      "parameters": {}
+    }
+  ],
+  "expectedDOF": -2,
+  "isOverConstrained": true
+}
