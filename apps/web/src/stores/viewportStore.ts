@@ -52,7 +52,7 @@ export interface ViewportState {
 
 interface ViewportActions {
   // Mode switching
-  enterSketchMode: (planeId: string, plane: SketchPlane, sketchId?: string) => void;
+  enterSketchMode: (plane: SketchPlane, sketchId?: string) => void;
   exitSketchMode: () => void;
   editSketch: (sketchId: string, plane: SketchPlane) => void;
   enter3DMode: () => void;

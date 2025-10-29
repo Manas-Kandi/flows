@@ -17,9 +17,18 @@ import {
 interface ModelToolbarProps {
   isSketchMode?: boolean;
   onToggleSketch?: () => void;
+  onNewSketch?: () => void;
+  onExitSketch?: () => void;
+  onExtrude?: () => void;
 }
 
-export function ModelToolbar({ isSketchMode = false, onToggleSketch }: ModelToolbarProps) {
+export function ModelToolbar({ 
+  isSketchMode = false, 
+  onToggleSketch,
+  onNewSketch,
+  onExitSketch,
+  onExtrude,
+}: ModelToolbarProps) {
   return (
     <div className="h-12 border-b border-border bg-card flex items-center px-3 gap-2">
       {/* Mode Toggle */}
@@ -27,8 +36,8 @@ export function ModelToolbar({ isSketchMode = false, onToggleSketch }: ModelTool
         <Button 
           variant={isSketchMode ? "default" : "ghost"} 
           size="icon" 
-          title="Sketch Mode"
-          onClick={onToggleSketch}
+          title={isSketchMode ? "Exit Sketch" : "New Sketch"}
+          onClick={isSketchMode ? onExitSketch : onNewSketch}
         >
           <Edit3 size={16} />
         </Button>
@@ -36,7 +45,7 @@ export function ModelToolbar({ isSketchMode = false, onToggleSketch }: ModelTool
           variant={!isSketchMode ? "default" : "ghost"} 
           size="icon" 
           title="3D Mode"
-          onClick={onToggleSketch}
+          onClick={isSketchMode ? onExitSketch : undefined}
         >
           <Box size={16} />
         </Button>
@@ -65,7 +74,13 @@ export function ModelToolbar({ isSketchMode = false, onToggleSketch }: ModelTool
       {/* Feature Tools */}
       <div className="flex items-center gap-1 pr-2 border-r border-border">
         <span className="text-xs text-muted-foreground mr-2">Features</span>
-        <Button variant="ghost" size="icon" title="Extrude">
+        <Button 
+          variant="ghost" 
+          size="icon" 
+          title="Extrude"
+          onClick={onExtrude}
+          disabled={!isSketchMode}
+        >
           <Box size={16} />
         </Button>
         <Button variant="ghost" size="icon" title="Revolve">
