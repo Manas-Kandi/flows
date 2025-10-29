@@ -56,15 +56,25 @@ export function Sketch3DInteraction({ plane, enabled }: Sketch3DInteractionProps
     );
   }, [plane]);
   
+  // Snap point to grid
+  const snapToGrid = useCallback((point: { x: number; y: number }, gridSize: number = 10) => {
+    return {
+      x: Math.round(point.x / gridSize) * gridSize,
+      y: Math.round(point.y / gridSize) * gridSize,
+    };
+  }, []);
+  
   const handlePointerMove = useCallback((event: PointerEvent) => {
     if (!enabled) return;
     
     const point = getIntersectionPoint(event.clientX, event.clientY);
     if (point) {
-      const point2D = to2D(point);
+      let point2D = to2D(point);
+      // Snap to grid (10mm grid)
+      point2D = snapToGrid(point2D, 10);
       setCursorPosition(point2D);
     }
-  }, [enabled, getIntersectionPoint, to2D, setCursorPosition]);
+  }, [enabled, getIntersectionPoint, to2D, snapToGrid, setCursorPosition]);
   
   const handlePointerDown = useCallback((event: PointerEvent) => {
     if (!enabled) return;
@@ -73,7 +83,9 @@ export function Sketch3DInteraction({ plane, enabled }: Sketch3DInteractionProps
     const point = getIntersectionPoint(event.clientX, event.clientY);
     if (!point) return;
     
-    const point2D = to2D(point);
+    let point2D = to2D(point);
+    // Snap to grid (10mm grid)
+    point2D = snapToGrid(point2D, 10);
     
     switch (toolState.activeTool) {
       case 'line': {
@@ -83,7 +95,8 @@ export function Sketch3DInteraction({ plane, enabled }: Sketch3DInteractionProps
           setIsDrawing(true);
         } else {
           // Finish line
-          const start2D = to2D(drawingPoints.current[0]);
+          let start2D = to2D(drawingPoints.current[0]);
+          start2D = snapToGrid(start2D, 10);
           
           addEntity({
             type: 'line',

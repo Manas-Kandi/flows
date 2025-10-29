@@ -13,6 +13,7 @@ import { SketchRenderer } from './SketchRenderer';
 import { ModelRenderer } from './ModelRenderer';
 import { PlaneRenderer } from './PlaneRenderer';
 import { Sketch3DInteraction } from './Sketch3DInteraction';
+import { GridCursor } from './GridCursor';
 import { useEffect, useRef } from 'react';
 import * as THREE from 'three';
 import { Minus, Circle, Square, Spline, Circle as CircleDot } from 'lucide-react';
@@ -75,17 +76,17 @@ export function UnifiedViewport() {
         {/* Lighting */}
         {mode === 'sketch' ? <SketchLighting /> : <CADLighting />}
         
-        {/* Grid */}
+        {/* Grid - Unified across all modes */}
         {showGrid && (
           <Grid
-            args={[200, 200]}
+            args={[2000, 2000]}
             cellSize={10}
-            cellThickness={0.5}
-            cellColor="#bbbbbb"
-            sectionSize={100}
-            sectionThickness={1}
-            sectionColor="#999999"
-            fadeDistance={2000}
+            cellThickness={0.8}
+            cellColor="#d5d5d5"
+            sectionSize={50}
+            sectionThickness={1.2}
+            sectionColor="#909090"
+            fadeDistance={4000}
             fadeStrength={1}
             followCamera={false}
             infiniteGrid={false}
@@ -108,6 +109,9 @@ export function UnifiedViewport() {
               plane={activePlane}
               layer={RenderLayer.SKETCH}
             />
+            
+            {/* Grid cursor - shows snap position */}
+            <GridCursor plane={activePlane} />
             
             {/* Handle drawing interactions */}
             <Sketch3DInteraction
