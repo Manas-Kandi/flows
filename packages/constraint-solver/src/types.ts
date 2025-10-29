@@ -24,6 +24,7 @@ export type ConstraintType =
   | 'tangent'
   | 'equal'
   | 'concentric'
+  | 'symmetric'
   | 'fix'
   | 'midpoint'
   | 'distance'
@@ -48,7 +49,7 @@ export interface SolverResult {
 
 export interface EntityGeometry {
   id: string;
-  type: 'line' | 'circle' | 'arc' | 'point';
+  type: 'line' | 'circle' | 'arc' | 'point' | 'ellipse' | 'slot' | 'polygon' | 'spline';
   variables: Map<string, SolverVariable>;
 }
 

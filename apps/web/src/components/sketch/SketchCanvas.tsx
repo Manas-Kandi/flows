@@ -9,7 +9,7 @@ import type { SketchEntity } from '../../types/sketch';
 import type { Constraint } from '../../types';
 import type { Point2D } from '../../types';
 import { SnapDetector } from '../../lib/sketch/snapSystem';
-import { snapToGrid, snapToAngle, degToRad } from '../../lib/sketch/geometry';
+import { snapToGrid, snapToAngle, degToRad, distance, getPolygonVertices, splinePointAt } from '../../lib/sketch/geometry';
 import { drawConstraints } from './ConstraintVisualization';
 
 interface SketchCanvasProps {
@@ -213,6 +213,46 @@ export function SketchCanvas({ width, height, className = '' }: SketchCanvasProp
         if (e.key === 'p' || e.key === 'P') {
           useSketchStore.getState().setActiveTool('point');
         }
+        
+        if (e.key === 'e' || e.key === 'E') {
+          useSketchStore.getState().setActiveTool('ellipse');
+        }
+        
+        if (e.key === 'y' || e.key === 'Y') {
+          useSketchStore.getState().setActiveTool('polygon');
+        }
+        
+        if (e.key === 's' || e.key === 'S') {
+          useSketchStore.getState().setActiveTool('spline');
+        }
+        
+        if (e.key === 'u' || e.key === 'U') {
+          useSketchStore.getState().setActiveTool('slot');
+        }
+        
+        if (e.key === 't' || e.key === 'T') {
+          useSketchStore.getState().setActiveTool('trim');
+        }
+        
+        if (e.key === 'x' || e.key === 'X') {
+          useSketchStore.getState().setActiveTool('extend');
+        }
+        
+        if (e.key === 'o' || e.key === 'O') {
+          useSketchStore.getState().setActiveTool('offset');
+        }
+        
+        if (e.key === 'm' || e.key === 'M') {
+          useSketchStore.getState().setActiveTool('mirror');
+        }
+        
+        if (e.key === 'q' || e.key === 'Q') {
+          useSketchStore.getState().setActiveTool('rotate');
+        }
+        
+        if (e.key === 'b' || e.key === 'B') {
+          useSketchStore.getState().setActiveTool('scale');
+        }
       }
       
       // Delete - Delete selected entities
@@ -332,6 +372,12 @@ function drawEntity(ctx: CanvasRenderingContext2D, entity: any, isSelected: bool
   ctx.strokeStyle = color;
   ctx.lineWidth = lineWidth;
   
+  if (entity.isConstruction) {
+    ctx.setLineDash([4, 4]);
+  } else {
+    ctx.setLineDash([]);
+  }
+  
   switch (entity.type) {
     case 'line': {
       ctx.beginPath();
@@ -370,7 +416,80 @@ function drawEntity(ctx: CanvasRenderingContext2D, entity: any, isSelected: bool
       ctx.fill();
       break;
     }
+    
+    case 'ellipse': {
+      ctx.beginPath();
+      ctx.ellipse(
+        entity.center.x,
+        entity.center.y,
+        entity.majorAxis,
+        entity.minorAxis,
+        entity.rotation,
+        0,
+        2 * Math.PI
+      );
+      ctx.stroke();
+      break;
+    }
+    
+    case 'polygon': {
+      const vertices = getPolygonVertices(entity);
+      if (vertices.length > 0) {
+        ctx.beginPath();
+        ctx.moveTo(vertices[0].x, vertices[0].y);
+        for (let i = 1; i < vertices.length; i++) {
+          ctx.lineTo(vertices[i].x, vertices[i].y);
+        }
+        ctx.closePath();
+        ctx.stroke();
+      }
+      break;
+    }
+    
+    case 'slot': {
+      const start = entity.start;
+      const end = entity.end;
+      const radius = entity.width / 2;
+      const angle = Math.atan2(end.y - start.y, end.x - start.x);
+      const length = distance(start, end);
+      
+      ctx.save();
+      ctx.translate(start.x, start.y);
+      ctx.rotate(angle);
+      
+      ctx.beginPath();
+      ctx.moveTo(0, radius);
+      ctx.lineTo(length, radius);
+      ctx.arc(length, 0, radius, Math.PI / 2, -Math.PI / 2, true);
+      ctx.lineTo(0, -radius);
+      ctx.arc(0, 0, radius, -Math.PI / 2, Math.PI / 2, true);
+      ctx.closePath();
+      ctx.stroke();
+      ctx.restore();
+      break;
+    }
+    
+    case 'spline': {
+      const segments = Math.max(8, entity.controlPoints.length * 4);
+      ctx.beginPath();
+      for (let i = 0; i <= segments; i++) {
+        const t = i / segments;
+        const point = splinePointAt(entity, t);
+        if (i === 0) {
+          ctx.moveTo(point.x, point.y);
+        } else {
+          ctx.lineTo(point.x, point.y);
+        }
+      }
+      if (entity.isClosed) {
+        ctx.closePath();
+      }
+      ctx.stroke();
+      break;
+    }
   }
+  
+  ctx.setLineDash([]);
 }
 
 function drawPreviewEntity(ctx: CanvasRenderingContext2D, entity: any) {

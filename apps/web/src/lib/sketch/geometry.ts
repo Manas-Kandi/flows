@@ -3,7 +3,17 @@
  */
 
 import type { Point2D } from '../../types';
-import type { SketchEntity, SketchLine, SketchCircle, SketchArc, BoundingBox } from '../../types/sketch';
+import type { 
+  SketchEntity, 
+  SketchLine, 
+  SketchCircle, 
+  SketchArc, 
+  SketchEllipse,
+  SketchSpline,
+  SketchPolygon,
+  SketchSlot,
+  BoundingBox 
+} from '../../types/sketch';
 
 // ============================================================================
 // Distance and Length Calculations
@@ -206,6 +216,155 @@ export function closestPointOnCircle(circle: SketchCircle, point: Point2D): Poin
 }
 
 // ============================================================================
+// Ellipse Operations
+// ============================================================================
+
+export function pointOnEllipse(ellipse: SketchEllipse, angle: number): Point2D {
+  const cos = Math.cos(angle);
+  const sin = Math.sin(angle);
+  const cosRot = Math.cos(ellipse.rotation);
+  const sinRot = Math.sin(ellipse.rotation);
+  
+  const localX = ellipse.majorAxis * cos;
+  const localY = ellipse.minorAxis * sin;
+  
+  return {
+    x: ellipse.center.x + localX * cosRot - localY * sinRot,
+    y: ellipse.center.y + localX * sinRot + localY * cosRot,
+  };
+}
+
+/**
+ * Approximate closest point on ellipse using iterative projection.
+ * For sketching purposes this precision is sufficient and fast.
+ */
+export function closestPointOnEllipse(ellipse: SketchEllipse, point: Point2D): Point2D {
+  // Transform point into ellipse local space (rotation removed)
+  const cosRot = Math.cos(-ellipse.rotation);
+  const sinRot = Math.sin(-ellipse.rotation);
+  const localPoint = {
+    x: cosRot * (point.x - ellipse.center.x) - sinRot * (point.y - ellipse.center.y),
+    y: sinRot * (point.x - ellipse.center.x) + cosRot * (point.y - ellipse.center.y),
+  };
+  
+  // Normalize to unit circle space
+  const scaledPoint = {
+    x: localPoint.x / ellipse.majorAxis,
+    y: localPoint.y / ellipse.minorAxis,
+  };
+  
+  const length = Math.hypot(scaledPoint.x, scaledPoint.y);
+  if (length === 0) {
+    return {
+      x: ellipse.center.x + ellipse.majorAxis * cosRot,
+      y: ellipse.center.y + ellipse.majorAxis * sinRot,
+    };
+  }
+  
+  // Project back onto ellipse
+  const projected = {
+    x: (scaledPoint.x / length) * ellipse.majorAxis,
+    y: (scaledPoint.y / length) * ellipse.minorAxis,
+  };
+  
+  // Transform back to world space
+  const world = {
+    x: ellipse.center.x + projected.x * cosRot - projected.y * sinRot,
+    y: ellipse.center.y + projected.x * sinRot + projected.y * cosRot,
+  };
+  
+  return world;
+}
+
+// ============================================================================
+// Polygon Operations
+// ============================================================================
+
+export function getPolygonVertices(polygon: SketchPolygon): Point2D[] {
+  const { center, radius, sides, rotation } = polygon;
+  const vertices: Point2D[] = [];
+  const step = (Math.PI * 2) / sides;
+  for (let i = 0; i < sides; i++) {
+    const angle = rotation + i * step;
+    vertices.push({
+      x: center.x + radius * Math.cos(angle),
+      y: center.y + radius * Math.sin(angle),
+    });
+  }
+  return vertices;
+}
+
+export function polygonEdges(polygon: SketchPolygon): SketchLine[] {
+  const vertices = getPolygonVertices(polygon);
+  const lines: SketchLine[] = [];
+  for (let i = 0; i < vertices.length; i++) {
+    const next = (i + 1) % vertices.length;
+    lines.push({
+      id: `${polygon.id}-edge-${i}`,
+      type: 'line',
+      sketchId: polygon.sketchId,
+      isConstruction: polygon.isConstruction,
+      isSelected: false,
+      isHighlighted: false,
+      createdAt: polygon.createdAt,
+      start: vertices[i],
+      end: vertices[next],
+    });
+  }
+  return lines;
+}
+
+// ============================================================================
+// Slot Operations
+// ============================================================================
+
+export function slotEndpoints(slot: SketchSlot): { start: Point2D; end: Point2D } {
+  return { start: slot.start, end: slot.end };
+}
+
+export function slotLength(slot: SketchSlot): number {
+  return distance(slot.start, slot.end);
+}
+
+export function slotRadius(slot: SketchSlot): number {
+  return slot.width / 2;
+}
+
+export function slotDirection(slot: SketchSlot): Point2D {
+  return normalize(slot.start, slot.end);
+}
+
+// ============================================================================
+// Spline Operations
+// ============================================================================
+
+export function splinePointAt(spline: SketchSpline, t: number): Point2D {
+  const { controlPoints } = spline;
+  if (controlPoints.length === 0) return { x: 0, y: 0 };
+  if (controlPoints.length === 1) return { ...controlPoints[0] };
+  
+  // De Casteljau for cubic bezier segments (supports degree > 3 by clamping)
+  const degree = Math.min(spline.degree, controlPoints.length - 1);
+  const points = controlPoints.slice(0, degree + 1).map(p => ({ ...p }));
+  
+  for (let r = 1; r <= degree; r++) {
+    for (let i = 0; i <= degree - r; i++) {
+      points[i] = lerp(points[i], points[i + 1], t);
+    }
+  }
+  
+  return points[0];
+}
+
+export function splineTangentAt(spline: SketchSpline, t: number): Point2D {
+  const delta = 0.001;
+  const p1 = splinePointAt(spline, Math.max(0, t - delta));
+  const p2 = splinePointAt(spline, Math.min(1, t + delta));
+  const dir = normalize(p1, p2);
+  return dir;
+}
+
+// ============================================================================
 // Arc Operations
 // ============================================================================
 
@@ -290,6 +449,81 @@ export function getEntityBoundingBox(entity: SketchEntity): BoundingBox {
       return {
         min: { ...point },
         max: { ...point },
+      };
+    }
+    
+    case 'ellipse': {
+      const ellipse = entity as SketchEllipse;
+      const cos = Math.cos(ellipse.rotation);
+      const sin = Math.sin(ellipse.rotation);
+      const dx = Math.hypot(ellipse.majorAxis * cos, ellipse.minorAxis * sin);
+      const dy = Math.hypot(ellipse.majorAxis * sin, ellipse.minorAxis * cos);
+      return {
+        min: {
+          x: ellipse.center.x - dx,
+          y: ellipse.center.y - dy,
+        },
+        max: {
+          x: ellipse.center.x + dx,
+          y: ellipse.center.y + dy,
+        },
+      };
+    }
+    
+    case 'polygon': {
+      const vertices = getPolygonVertices(entity as SketchPolygon);
+      let minX = Infinity;
+      let minY = Infinity;
+      let maxX = -Infinity;
+      let maxY = -Infinity;
+      vertices.forEach((v) => {
+        minX = Math.min(minX, v.x);
+        minY = Math.min(minY, v.y);
+        maxX = Math.max(maxX, v.x);
+        maxY = Math.max(maxY, v.y);
+      });
+      return {
+        min: { x: minX, y: minY },
+        max: { x: maxX, y: maxY },
+      };
+    }
+    
+    case 'slot': {
+      const slot = entity as SketchSlot;
+      const radius = slotRadius(slot);
+      return {
+        min: {
+          x: Math.min(slot.start.x, slot.end.x) - radius,
+          y: Math.min(slot.start.y, slot.end.y) - radius,
+        },
+        max: {
+          x: Math.max(slot.start.x, slot.end.x) + radius,
+          y: Math.max(slot.start.y, slot.end.y) + radius,
+        },
+      };
+    }
+    
+    case 'spline': {
+      const spline = entity as SketchSpline;
+      if (spline.controlPoints.length === 0) {
+        return {
+          min: { x: 0, y: 0 },
+          max: { x: 0, y: 0 },
+        };
+      }
+      let minX = Infinity;
+      let minY = Infinity;
+      let maxX = -Infinity;
+      let maxY = -Infinity;
+      spline.controlPoints.forEach((p) => {
+        minX = Math.min(minX, p.x);
+        minY = Math.min(minY, p.y);
+        maxX = Math.max(maxX, p.x);
+        maxY = Math.max(maxY, p.y);
+      });
+      return {
+        min: { x: minX, y: minY },
+        max: { x: maxX, y: maxY },
       };
     }
     
@@ -409,6 +643,69 @@ export function hitTestEntity(entity: SketchEntity, point: Point2D, tolerance = 
     case 'point': {
       const p = (entity as any).position;
       return distance(point, p) < tolerance;
+    }
+    
+    case 'ellipse': {
+      const ellipse = entity as SketchEllipse;
+      const closest = closestPointOnEllipse(ellipse, point);
+      return distance(point, closest) < tolerance;
+    }
+    
+    case 'polygon': {
+      const lines = polygonEdges(entity as SketchPolygon);
+      return lines.some(line => distanceToLine(line, point) < tolerance);
+    }
+    
+    case 'slot': {
+      const slot = entity as SketchSlot;
+      const radius = slotRadius(slot);
+      const line: SketchLine = {
+        id: `${slot.id}-center`,
+        type: 'line',
+        sketchId: slot.sketchId,
+        isConstruction: slot.isConstruction,
+        isSelected: slot.isSelected,
+        isHighlighted: slot.isHighlighted,
+        createdAt: slot.createdAt,
+        start: slot.start,
+        end: slot.end,
+      };
+      const distToCenter = distanceToLine(line, point);
+      if (distToCenter <= radius + tolerance) {
+        // Also validate within slot caps
+        const startCap = distance(point, slot.start) <= radius + tolerance;
+        const endCap = distance(point, slot.end) <= radius + tolerance;
+        if (distToCenter <= radius - tolerance || startCap || endCap) {
+          return true;
+        }
+      }
+      return false;
+    }
+    
+    case 'spline': {
+      const spline = entity as SketchSpline;
+      const segments = 20;
+      let prev = spline.controlPoints[0];
+      for (let i = 1; i <= segments; i++) {
+        const t = i / segments;
+        const current = splinePointAt(spline, t);
+        const seg: SketchLine = {
+          id: `${spline.id}-seg-${i}`,
+          type: 'line',
+          sketchId: spline.sketchId,
+          isConstruction: spline.isConstruction,
+          isSelected: spline.isSelected,
+          isHighlighted: spline.isHighlighted,
+          createdAt: spline.createdAt,
+          start: prev,
+          end: current,
+        };
+        if (distanceToLine(seg, point) < tolerance) {
+          return true;
+        }
+        prev = current;
+      }
+      return false;
     }
     
     default:

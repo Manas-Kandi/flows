@@ -140,6 +140,38 @@ Detailed UX specifications for each parametric CAD feature.
 
 ---
 
+### Additional Sketch Entities
+
+**Ellipse Tool (E)**
+- Step 1: Click to place center; Step 2: Click to set major axis direction/length; Step 3: Move perpendicular to size minor axis and click to confirm
+- Live overlay shows major/minor radii and rotation; hold `Shift` to clamp to circle
+
+**Polygon Tool (Y)**
+- Click center then vertex; `[`/`]` cycles side count (3–24) while preview updates
+- Automatically applies equal-length constraints to edges
+
+**Spline Tool (S)**
+- Click to add control points; `Enter` finishes; `Shift+C` toggles closed loop
+- Degree adjustable via `[`/`]`; overlay displays degree and closed/open state
+
+**Slot Tool (U)**
+- Define slot start and end points; `+`/`-` modify width before committing
+- Generates parallel lines plus end arcs with maintained width constraint
+
+### Advanced Edit Tools
+
+**Extend (X)**: Select line, click near endpoint to lengthen through cursor; snaps to nearest intersection.
+
+**Offset (O)**: Select curves, specify offset distance/direction in overlay; maintains concentric/parallel relationships.
+
+**Mirror (M)**: Select entities, click two points to define mirror axis; creates symmetric copies with constraints.
+
+**Rotate (Q)**: Pick rotation origin, enter angle in degrees, apply to current selection.
+
+**Scale (B)**: Choose base point, input scale factor; adjusts associated dimensional constraints proportionally.
+
+---
+
 ### 1.6 Offset Tool
 
 **Activation**: Click Offset or press 'O'

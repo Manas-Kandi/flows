@@ -4,7 +4,6 @@
 
 import { useEffect } from 'react';
 import { useSketchStore } from '../../../stores/sketchStore';
-import { useModelStore } from '../../../stores/modelStore';
 import type { SketchLine } from '../../../types/sketch';
 
 export function LineTool() {
@@ -14,9 +13,8 @@ export function LineTool() {
     addEntity,
     clearDrawingPoints,
     setActiveTool,
+    solveConstraints,
   } = useSketchStore();
-  
-  const { solveConstraints } = useModelStore();
   
   useEffect(() => {
     // Update preview as cursor moves

@@ -216,50 +216,26 @@ export const useModelStore = create<ModelState>()(
       });
     },
 
-    deleteFeature: (featureId) => {
-      set((state) => {
-        if (state.currentPart) {
-          state.currentPart.features = state.currentPart.features.filter(
-            (f) => f.id !== featureId
-          );
-        }
-      });
-    },
-
-    suppressFeature: (featureId, suppressed) => {
-      set((state) => {
-        if (state.currentPart) {
-          const feature = state.currentPart.features.find((f) => f.id === featureId);
-          if (feature) {
-            feature.suppressed = suppressed;
-          }
-        }
-      });
-    },
-
-    reorderFeature: (featureId, newIndex) => {
-      set((state) => {
-        if (state.currentPart) {
-          const features = state.currentPart.features;
-          const currentIndex = features.findIndex((f) => f.id === featureId);
-          if (currentIndex !== -1) {
-            const [feature] = features.splice(currentIndex, 1);
-            features.splice(newIndex, 0, feature);
-          }
-        }
-      });
-    },
-
-    // 3D Feature management
     addFeature: (feature) => {
       set((state) => {
         state.features.set(feature.id, feature);
+        if (state.currentPart) {
+          state.currentPart.features.push(feature);
+        }
       });
     },
 
     removeFeature: (featureId) => {
       set((state) => {
         state.features.delete(featureId);
+        if (state.currentPart) {
+          state.currentPart.features = state.currentPart.features.filter(
+            (f) => f.id !== featureId
+          );
+        }
+        if (state.selectedFeature === featureId) {
+          state.selectedFeature = undefined;
+        }
       });
     },
 
@@ -268,6 +244,12 @@ export const useModelStore = create<ModelState>()(
         const feature = state.features.get(featureId);
         if (feature) {
           Object.assign(feature, updates);
+        }
+        if (state.currentPart) {
+          const partFeature = state.currentPart.features.find((f) => f.id === featureId);
+          if (partFeature) {
+            Object.assign(partFeature, updates);
+          }
         }
       });
     },

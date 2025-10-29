@@ -4,7 +4,6 @@
 
 import React, { useEffect } from 'react';
 import { useSketchStore } from '../../stores/sketchStore';
-import { useModelStore } from '../../stores/modelStore';
 import { SketchCanvas } from '../sketch/SketchCanvas';
 import { SketchToolbar } from '../sketch/SketchToolbar';
 import { ConstraintToolbar } from '../sketch/ConstraintToolbar';
@@ -13,10 +12,19 @@ import { CircleTool } from '../sketch/tools/CircleTool';
 import { ArcTool } from '../sketch/tools/ArcTool';
 import { RectangleTool } from '../sketch/tools/RectangleTool';
 import { PointTool } from '../sketch/tools/PointTool';
+import { EllipseTool } from '../sketch/tools/EllipseTool';
+import { PolygonTool } from '../sketch/tools/PolygonTool';
+import { SplineTool } from '../sketch/tools/SplineTool';
+import { SlotTool } from '../sketch/tools/SlotTool';
+import { TrimTool } from '../sketch/tools/TrimTool';
+import { ExtendTool } from '../sketch/tools/ExtendTool';
+import { OffsetTool } from '../sketch/tools/OffsetTool';
+import { MirrorTool } from '../sketch/tools/MirrorTool';
+import { RotateTool } from '../sketch/tools/RotateTool';
+import { ScaleTool } from '../sketch/tools/ScaleTool';
 
 export function SketchWorkspace() {
-  const { createSketch, setActiveTool, toolState } = useSketchStore();
-  const { addEntity, solveConstraints } = useModelStore();
+  const { createSketch, setActiveTool, toolState, solveConstraints } = useSketchStore();
   
   // Initialize sketch on mount
   useEffect(() => {
@@ -58,6 +66,16 @@ export function SketchWorkspace() {
         {toolState.activeTool === 'arc' && <ArcTool />}
         {toolState.activeTool === 'rectangle' && <RectangleTool />}
         {toolState.activeTool === 'point' && <PointTool />}
+        {toolState.activeTool === 'ellipse' && <EllipseTool />}
+        {toolState.activeTool === 'polygon' && <PolygonTool />}
+        {toolState.activeTool === 'spline' && <SplineTool />}
+        {toolState.activeTool === 'slot' && <SlotTool />}
+        {toolState.activeTool === 'trim' && <TrimTool />}
+        {toolState.activeTool === 'extend' && <ExtendTool />}
+        {toolState.activeTool === 'offset' && <OffsetTool />}
+        {toolState.activeTool === 'mirror' && <MirrorTool />}
+        {toolState.activeTool === 'rotate' && <RotateTool />}
+        {toolState.activeTool === 'scale' && <ScaleTool />}
         
         {/* Status Bar */}
         <div className="absolute bottom-0 left-0 right-0 bg-gray-800 border-t border-gray-700 px-4 py-2 flex items-center justify-between text-xs text-gray-400">
@@ -70,8 +88,8 @@ export function SketchWorkspace() {
           </div>
           
           <div className="flex items-center gap-4">
-            <span>Entities: {useModelStore.getState().sketchState.entities.size}</span>
-            <span>Constraints: {useModelStore.getState().sketchState.constraints.size}</span>
+            <span>Entities: {useSketchStore.getState().getAllEntities().length}</span>
+            <span>Constraints: {useSketchStore.getState().getAllConstraints().length}</span>
             <span>DOF: {calculateDOF()}</span>
           </div>
         </div>
@@ -81,11 +99,5 @@ export function SketchWorkspace() {
 }
 
 function calculateDOF(): number {
-  const { sketchState } = useModelStore.getState();
-  const entityCount = sketchState.entities.size;
-  const constraintCount = sketchState.constraints.size;
-  
-  // Simplified DOF calculation: 2 DOF per point - constraints
-  // This is a rough estimate, real calculation would be more complex
-  return Math.max(0, entityCount * 2 - constraintCount);
+  return useSketchStore.getState().degreesOfFreedom;
 }

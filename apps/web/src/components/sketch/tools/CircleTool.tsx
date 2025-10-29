@@ -4,7 +4,6 @@
 
 import { useEffect } from 'react';
 import { useSketchStore } from '../../../stores/sketchStore';
-import { useModelStore } from '../../../stores/modelStore';
 import { distance } from '../../../lib/sketch/geometry';
 import type { SketchCircle } from '../../../types/sketch';
 
@@ -14,9 +13,8 @@ export function CircleTool() {
     setPreviewEntity,
     addEntity,
     clearDrawingPoints,
+    solveConstraints,
   } = useSketchStore();
-  
-  const { solveConstraints } = useModelStore();
   
   useEffect(() => {
     // Update preview as cursor moves

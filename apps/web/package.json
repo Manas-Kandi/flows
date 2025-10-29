@@ -20,6 +20,8 @@
     "@radix-ui/react-switch": "^1.0.3",
     "@radix-ui/react-tabs": "^1.0.4",
     "@radix-ui/react-tooltip": "^1.0.7",
+    "@react-three/drei": "^9.97.0",
+    "@react-three/fiber": "^8.15.16",
     "@tldraw/tldraw": "^2.0.0",
     "clsx": "^2.1.0",
     "immer": "^10.0.3",

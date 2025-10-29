@@ -134,6 +134,9 @@ export interface BaseConstraint {
   isActive: boolean;
   isDriving: boolean; // Driving vs reference dimension
   createdAt: number;
+  status?: 'satisfied' | 'conflicting' | 'redundant' | 'inactive';
+  message?: string;
+  parameters?: Record<string, number>;
 }
 
 export interface CoincidentConstraint extends BaseConstraint {
@@ -177,6 +180,25 @@ export interface EqualConstraint extends BaseConstraint {
   property: 'length' | 'radius';
 }
 
+export interface ConcentricConstraint extends BaseConstraint {
+  type: 'concentric';
+  entity1Id: string;
+  entity2Id: string;
+}
+
+export interface SymmetricConstraint extends BaseConstraint {
+  type: 'symmetric';
+  entity1Id: string;
+  entity2Id: string;
+  aboutEntityId: string; // Typically a line of symmetry
+}
+
+export interface MidpointConstraint extends BaseConstraint {
+  type: 'midpoint';
+  pointId: string;
+  lineId: string;
+}
+
 export interface DistanceConstraint extends BaseConstraint {
   type: 'distance';
   entity1Id: string;
@@ -191,11 +213,22 @@ export interface RadiusConstraint extends BaseConstraint {
   value: number;
 }
 
+export interface DiameterConstraint extends BaseConstraint {
+  type: 'diameter';
+  circleId: string;
+  value: number;
+}
+
 export interface AngleConstraint extends BaseConstraint {
   type: 'angle';
   line1Id: string;
   line2Id: string;
   value: number; // Radians
+}
+
+export interface FixConstraint extends BaseConstraint {
+  type: 'fix';
+  entityId: string;
 }
 
 export type Constraint = 
@@ -206,9 +239,14 @@ export type Constraint =
   | PerpendicularConstraint
   | TangentConstraint
   | EqualConstraint
+  | ConcentricConstraint
+  | SymmetricConstraint
+  | MidpointConstraint
   | DistanceConstraint
   | RadiusConstraint
-  | AngleConstraint;
+  | DiameterConstraint
+  | AngleConstraint
+  | FixConstraint;
 
 // ============================================================================
 // Sketch Definition

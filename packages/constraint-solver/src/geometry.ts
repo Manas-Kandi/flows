@@ -44,6 +44,44 @@ export function createEntityGeometry(entityId: string, entityType: string, geome
       variables.set('end_angle', { id: `${entityId}_end_angle`, value: arc.endAngle });
       break;
     }
+    
+    case 'ellipse': {
+      const ellipse = geometry as { center: Point2D; majorAxis: number; minorAxis: number; rotation: number };
+      variables.set('center_x', { id: `${entityId}_center_x`, value: ellipse.center.x });
+      variables.set('center_y', { id: `${entityId}_center_y`, value: ellipse.center.y });
+      variables.set('major', { id: `${entityId}_major`, value: ellipse.majorAxis });
+      variables.set('minor', { id: `${entityId}_minor`, value: ellipse.minorAxis });
+      variables.set('rotation', { id: `${entityId}_rotation`, value: ellipse.rotation });
+      break;
+    }
+    
+    case 'slot': {
+      const slot = geometry as { start: Point2D; end: Point2D; width: number };
+      variables.set('start_x', { id: `${entityId}_start_x`, value: slot.start.x });
+      variables.set('start_y', { id: `${entityId}_start_y`, value: slot.start.y });
+      variables.set('end_x', { id: `${entityId}_end_x`, value: slot.end.x });
+      variables.set('end_y', { id: `${entityId}_end_y`, value: slot.end.y });
+      variables.set('width', { id: `${entityId}_width`, value: slot.width });
+      break;
+    }
+    
+    case 'polygon': {
+      const polygon = geometry as { center: Point2D; radius: number; rotation: number };
+      variables.set('center_x', { id: `${entityId}_center_x`, value: polygon.center.x });
+      variables.set('center_y', { id: `${entityId}_center_y`, value: polygon.center.y });
+      variables.set('radius', { id: `${entityId}_radius`, value: polygon.radius });
+      variables.set('rotation', { id: `${entityId}_rotation`, value: polygon.rotation });
+      break;
+    }
+    
+    case 'spline': {
+      const spline = geometry as { controlPoints: Point2D[] };
+      spline.controlPoints.forEach((point, index) => {
+        variables.set(`cp_${index}_x`, { id: `${entityId}_cp_${index}_x`, value: point.x });
+        variables.set(`cp_${index}_y`, { id: `${entityId}_cp_${index}_y`, value: point.y });
+      });
+      break;
+    }
   }
   
   return {
@@ -119,6 +157,89 @@ export function updateEntityGeometry(entity: any, entityType: string, results: M
       }
       break;
     }
+    
+    case 'ellipse': {
+      const centerX = results.get(`${entityId}_center_x`);
+      const centerY = results.get(`${entityId}_center_y`);
+      const major = results.get(`${entityId}_major`);
+      const minor = results.get(`${entityId}_minor`);
+      const rotation = results.get(`${entityId}_rotation`);
+      if (
+        centerX !== undefined &&
+        centerY !== undefined &&
+        major !== undefined &&
+        minor !== undefined &&
+        rotation !== undefined
+      ) {
+        return {
+          ...entity,
+          center: { x: centerX, y: centerY },
+          majorAxis: major,
+          minorAxis: minor,
+          rotation,
+        };
+      }
+      break;
+    }
+    
+    case 'slot': {
+      const startX = results.get(`${entityId}_start_x`);
+      const startY = results.get(`${entityId}_start_y`);
+      const endX = results.get(`${entityId}_end_x`);
+      const endY = results.get(`${entityId}_end_y`);
+      const width = results.get(`${entityId}_width`);
+      if (
+        startX !== undefined &&
+        startY !== undefined &&
+        endX !== undefined &&
+        endY !== undefined &&
+        width !== undefined
+      ) {
+        return {
+          ...entity,
+          start: { x: startX, y: startY },
+          end: { x: endX, y: endY },
+          width,
+        };
+      }
+      break;
+    }
+    
+    case 'polygon': {
+      const centerX = results.get(`${entityId}_center_x`);
+      const centerY = results.get(`${entityId}_center_y`);
+      const radius = results.get(`${entityId}_radius`);
+      const rotation = results.get(`${entityId}_rotation`);
+      if (
+        centerX !== undefined &&
+        centerY !== undefined &&
+        radius !== undefined &&
+        rotation !== undefined
+      ) {
+        return {
+          ...entity,
+          center: { x: centerX, y: centerY },
+          radius,
+          rotation,
+        };
+      }
+      break;
+    }
+    
+    case 'spline': {
+      const controlPoints = (entity.controlPoints || []).map((point: Point2D, index: number) => {
+        const x = results.get(`${entityId}_cp_${index}_x`);
+        const y = results.get(`${entityId}_cp_${index}_y`);
+        return {
+          x: x !== undefined ? x : point.x,
+          y: y !== undefined ? y : point.y,
+        };
+      });
+      return {
+        ...entity,
+        controlPoints,
+      };
+    }
   }
   
   return entity;
@@ -146,6 +267,14 @@ export function calculateDOF(entity: EntityGeometry): number {
       return Math.min(dof, 3); // Max 3 DOF (cx, cy, r)
     case 'arc':
       return Math.min(dof, 5); // Max 5 DOF (cx, cy, r, start, end)
+    case 'ellipse':
+      return Math.min(dof, 5); // cx, cy, major, minor, rotation
+    case 'slot':
+      return Math.min(dof, 5); // start (2), end (2), width
+    case 'polygon':
+      return Math.min(dof, 4); // center (2), radius, rotation
+    case 'spline':
+      return dof; // depends on control points
     default:
       return dof;
   }
