@@ -200,7 +200,3 @@ See [CONTRIBUTING.md](./CONTRIBUTING.md) for development guidelines.
 ## License
 
 Proprietary - All rights reserved.
-
-## Contact
-
-For questions or support: [engineering@flows.dev](mailto:engineering@flows.dev)
